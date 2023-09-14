@@ -16,6 +16,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btNo: Button
     private lateinit var btNext: Button
 
+    private var score = 0
+    private var allQuestionsAnswered = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -58,70 +61,81 @@ class MainActivity : AppCompatActivity() {
         var question10 = Question("¿Es Ottawa la capital de Australia?", false)
         questions.add(question10)
     }
-    private fun setupViews(){
+    // Declarar una variable para rastrear la puntuación
+    private var currentToast: Toast? = null // Variable para rastrear el Toast actual
 
+    private fun setupViews() {
         showSentence()
+        updateScoreView()
 
-        btYes.setOnClickListener{
-            if (questions[position].answer){
-                Toast.makeText(this, "Correcto", Toast.LENGTH_SHORT).show()
+        val originalButtonColor = btYes.background
 
-                // Cambiar el color del botón que representa la respuesta correcta a verde
-                btYes.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_light))
-
-                // Programar una tarea diferida para restablecer el color del botón después de un cierto tiempo
-
-                Handler().postDelayed({
-
-                    // cambie el color a #322c4c
-                    btYes.setBackgroundColor(ContextCompat.getColor(this, R.color.purple_500))
-
-
-                }, 1000) // Cambia 1000 a la cantidad de milisegundos que desees esperar antes de restablecer el color
-                // Verificar si hay más preguntas disponibles
-                if (position < questions.size - 1) {
-                    position++
-                    showSentence()
+        btYes.setOnClickListener {
+            if (!allQuestionsAnswered) {
+                if (questions[position].answer) {
+                    score++
+                    updateScoreView()
+                    cancelCurrentToast() // Cancelar el Toast actual, si existe
+                    showToast("Correcto") // Mostrar Toast "Correcto"
                 } else {
-                    Toast.makeText(this, "¡Has respondido todas las preguntas!", Toast.LENGTH_SHORT).show()
-                    // Aquí puedes realizar alguna acción adicional si se han respondido todas las preguntas
+                    cancelCurrentToast() // Cancelar el Toast actual, si existe
+                    showToast("Incorrecto") // Mostrar Toast "Incorrecto"
                 }
-            }
-            else {
-                Toast.makeText(this, "Incorrecto", Toast.LENGTH_SHORT).show()
+                moveToNextQuestion()
             }
         }
 
-        btNo.setOnClickListener{
-            if (!questions[position].answer){
-                Toast.makeText(this, "Correcto", Toast.LENGTH_SHORT).show()
-
-                btYes.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_light))
-
-                // Verificar si hay más preguntas disponibles
-                if (position < questions.size - 1) {
-                    position++
-                    showSentence()
+        btNo.setOnClickListener {
+            if (!allQuestionsAnswered) {
+                if (!questions[position].answer) {
+                    score++
+                    updateScoreView()
+                    cancelCurrentToast() // Cancelar el Toast actual, si existe
+                    showToast("Correcto") // Mostrar Toast "Correcto"
                 } else {
-                    Toast.makeText(this, "¡Has respondido todas las preguntas!", Toast.LENGTH_SHORT).show()
-                    // Aquí puedes realizar alguna acción adicional si se han respondido todas las preguntas
+                    cancelCurrentToast() // Cancelar el Toast actual, si existe
+                    showToast("Incorrecto") // Mostrar Toast "Incorrecto"
                 }
-            }
-            else {
-                Toast.makeText(this, "Incorrecto", Toast.LENGTH_SHORT).show()
-
+                moveToNextQuestion()
             }
         }
 
         btNext.setOnClickListener {
-            position++
-            showSentence()
-
+            moveToNextQuestion()
         }
     }
 
+    // Función para mostrar un Toast con un mensaje
+    private fun showToast(message: String) {
+        currentToast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
+        currentToast?.show()
+    }
 
-    private fun showSentence(){
+    // Función para cancelar el Toast actual
+    private fun cancelCurrentToast() {
+        currentToast?.cancel()
+    }
+
+    private fun updateScoreView() {
+        val scoreTextView = findViewById<TextView>(R.id.tvScore)
+        scoreTextView.text = "Puntuación: $score"
+    }
+
+    private fun moveToNextQuestion() {
+        if (position < questions.size - 1) {
+            position++
+            showSentence()
+        } else {
+            showFinalScore()
+        }
+    }
+
+    private fun showFinalScore() {
+        Toast.makeText(this, "¡Has respondido todas las preguntas!", Toast.LENGTH_SHORT).show()
+        allQuestionsAnswered = true
+    }
+
+    private fun showSentence() {
         val tvSentence = findViewById<TextView>(R.id.tvSentence)
         tvSentence.text = questions[position].sentence
     }
